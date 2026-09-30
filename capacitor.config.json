@@ -1,0 +1,11 @@
+{
+  "appId": "com.prokuiz.fighter",
+  "appName": "ProFighter",
+  "webDir": "www",
+  "server": {
+    "url": "https://alemmaxx.github.io/ProFighter/",
+    "allowNavigation": ["alemmaxx.github.io"],
+    "errorPath": "offline.html"
+  },
+  "android": { "backgroundColor": "#100c1c" }
+}
