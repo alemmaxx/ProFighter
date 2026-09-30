@@ -1,0 +1,5 @@
+Letak 6 gambar potret AI dalam folder ini dengan nama TEPAT seperti di bawah (huruf kecil):
+  jebat.jpg  mawar.jpg  badang.jpg  kilat.jpg  naga.jpg  meka.jpg
+(.png atau .webp pun boleh). Saiz terbaik: 1024 x 1024, bawah 400 KB setiap satu.
+Kalau gambar tiada, app guna potret 3D biasa secara automatik.
+Prompt untuk jana gambar: lihat fail PROMPT_POTRET.md

@@ -26,6 +26,10 @@ Kombo: 👊 → 👊 → 🦵 → ✨. Papan kekunci PC: A/D/W/S, J tumbuk, K te
 Pahlawan & pentas dilukis dalam **3D sebenar** (enjin WebGL sendiri dalam `index.html`, tiada library luar — ringan & boleh main offline): badan berlampu gaya kartun dengan garis hitam, pentas 3D dengan lantai, pokok/tiang/batu & latar jauh, kamera zum ikut jarak pemain dan fokus semasa SUPER.
 Phone lama/lambat: **Tetapan → Grafik 3D → matikan** untuk guna mod 2D ringan. Jika phone tak sokong WebGL, app tukar ke 2D sendiri.
 
+## Potret AI realistik (pilihan)
+Letak 6 gambar potret dalam folder `img/` (`jebat.jpg`, `mawar.jpg`, `badang.jpg`, `kilat.jpg`, `naga.jpg`, `meka.jpg`). Prompt siap ada dalam **`PROMPT_POTRET.md`**.
+Potret dipapar di skrin pilih pahlawan, skrin **VS** sebelum bertarung, bar nyawa, skrin SUPER dan skrin menang/kalah. Tiada gambar = guna potret 3D. Selepas tukar gambar, naikkan `APP_VERSION` supaya gambar baru dimuat.
+
 ## Ciri lain
 BM | EN · keyboard dalam app · butang back Android + pop up keluar · skrin melintang (landscape) · pusingan terbaik 3 · kombo, K.O., PERFECT · bunyi & getaran · PWA iPhone · halaman offline · auto update.
 
