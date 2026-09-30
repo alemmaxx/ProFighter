@@ -174,11 +174,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
 .pad.P{width:78px;height:78px;right:84px;bottom:0;background:radial-gradient(circle at 35% 30%,#ff8a7a,#d9173b)}
 .pad.K{width:78px;height:78px;right:0;bottom:44px;background:radial-gradient(circle at 35% 30%,#ffd27a,#e8801e)}
 .pad.S{width:64px;height:64px;right:22px;bottom:132px;background:radial-gradient(circle at 35% 30%,#9ad7ff,#2f6fe0)}
+.pad.C{width:58px;height:58px;right:176px;bottom:82px;background:radial-gradient(circle at 35% 30%,#7dd3fc,#0e7490)}
+.pad.C.cd{filter:grayscale(.85) brightness(.6)}
 .pad.B{width:64px;height:64px;right:172px;bottom:6px;background:radial-gradient(circle at 35% 30%,#a8f0c8,#1e9c63)}
 .pad.X{width:60px;height:60px;right:100px;bottom:96px;background:radial-gradient(circle at 35% 30%,#555,#262033);opacity:.55}
-.pad.X.full{opacity:1;background:radial-gradient(circle at 35% 30%,#fff3b0,#f59e0b 55%,#d9173b);animation:supGlow .7s ease-in-out infinite}
+.pad.X.full{opacity:1;background:radial-gradient(circle at 35% 30%,#fff3b0,#f59e0b 55%,#d9173b);box-shadow:0 0 22px 6px rgba(255,200,60,.7);animation:supGlow .7s ease-in-out infinite}
 .pad.S.cd{filter:grayscale(.8) brightness(.7)}
-@keyframes supGlow{50%{box-shadow:0 0 26px 8px rgba(255,200,60,.8)}}
+@keyframes supGlow{50%{transform:scale(1.08)}}
 .pauseBtn{position:absolute;left:50%;top:calc(66px + env(safe-area-inset-top));transform:translateX(-50%);width:40px;height:34px;border-radius:10px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25);font-size:15px;pointer-events:auto;color:#fff}
 #rot{position:fixed;inset:0;z-index:95;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:10px}
 body.needLand #rot{display:flex}
@@ -450,6 +452,7 @@ body.bigPads .jb{transform:scale(1.14);transform-origin:left bottom}
         <button class="pad S" data-b="S" id="padS"><div><span>✨</span><em data-t="bS">KHAS</em></div></button>
         <button class="pad K" data-b="K"><div><span>🦵</span><em data-t="bK">TENDANG</em></div></button>
         <button class="pad P" data-b="P"><div><span>👊</span><em data-t="bP">TUMBUK</em></div></button>
+        <button class="pad C" data-b="C" id="padC"><div><span>🔄</span><em data-t="bC">BALAS</em></div></button>
         <button class="pad B" data-b="B"><div><span>🛡️</span><em data-t="bB">TAHAN</em></div></button>
       </div>
       <button class="pauseBtn" id="pauseBtn" onclick="pauseGame()">⏸</button>
@@ -482,6 +485,7 @@ body.bigPads .jb{transform:scale(1.14);transform-origin:left bottom}
       <div class="set"><span data-t="sound">Bunyi</span><div class="tog" id="tSound" onclick="toggleSet('sound')"></div></div>
       <div class="set"><span data-t="vib">Getaran</span><div class="tog" id="tVib" onclick="toggleSet('vib')"></div></div>
       <div class="set"><span data-t="g3d">Grafik 3D</span><div class="tog" id="tG3d" onclick="toggleSet('g3d')"></div></div>
+      <div class="set" id="sprRow" style="display:none"><span data-t="sprT">Watak gambar</span><div class="tog" id="tSpr" onclick="toggleSet('spr')"></div></div>
       <div class="set"><span data-t="bigBtn">Butang kawalan besar</span><div class="tog" id="tBig" onclick="toggleSet('big')"></div></div>
       <div class="set"><span><span data-t="version">Versi</span> <span class="verTxt" style="color:var(--mut)"></span></span><button class="chip" onclick="checkUpdate(true)" data-t="checkUpd">Semak Kemas Kini</button></div>
       <div class="set" style="flex-direction:column;align-items:stretch;gap:8px"><span data-t="howTitle">Cara main</span><div class="howto" id="howto"></div></div>
@@ -626,12 +630,12 @@ const firebaseConfig = {
 /* 2) Link GitHub Pages app ini (untuk iPhone & kongsi) */
 const SHARE_LINK='https://alemmaxx.github.io/ProFighter/';
 /* 3) PENTING: naikkan nombor ini setiap kali index.html dikemas kini di GitHub */
-const APP_VERSION='1.6.0';
+const APP_VERSION='1.8.0';
 
 /* ============================================================
    ENGINE — pahlawan, animasi rangka, fizik, serangan
    ============================================================ */
-const MAXSEP=700,SW=1000,SH=562,GY=488,WALL_L=42,WALL_R=958,GRAV=0.9,D2R=Math.PI/180,ROUND_T=60*60;
+const CTR_COST=30,MAXSEP=700,SW=1000,SH=562,GY=488,WALL_L=42,WALL_R=958,GRAV=0.9,D2R=Math.PI/180,ROUND_T=60*60;
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -720,7 +724,8 @@ const ANIM={
  spinUp:[[0,P.crouch],[8,P.upper],[42,P.upper],[56,P.jumpUp]],
  boulder:[[0,P.slamDn],[14,P.slamUp],[27,P.castX],[40,P.castX],[54,P.idle]],
  bolts:[[0,P.idle],[10,P.slamUp],[56,P.slamUp],[62,P.idle]],
- beam:[[0,P.castW],[18,P.castX],[64,P.castX],[74,P.idle]]
+ beam:[[0,P.castW],[18,P.castX],[64,P.castX],[74,P.idle]],
+ ctr:[[0,P.crouch],[4,P.dash],[9,P.castX],[18,P.castX],[28,P.idle]]
 };
 function ikLeg(fx,hy){const d=Math.min(Math.hypot(fx,hy),87.6),base=Math.atan2(fx,hy);
   const al=Math.acos(clamp(d/88,-1,1)),ga=Math.acos(clamp((3872-d*d)/3872,-1,1));return [base+al,-(Math.PI-ga)];}
@@ -753,7 +758,8 @@ const MV={
  spinUp:{n:58,an:'spinUp',su:1,spinF:1,jumpAt:8,vy:-15.5,vxj:3.4,h:[9,15,21,27,33].map((s,i)=>({s,e:s+4,bx:[-40,96],by:[-190,-20],d:34,hs:30,bs:10,pu:1.5,sp:1,kd:i===4?1:0,la:-13,hv:i===4?1:0}))},
  boulder:{n:54,an:'boulder',su:1,spawn:27},
  bolts:{n:62,an:'bolts',su:1,bolts:[10,24,38]},
- beam:{n:74,an:'beam',su:1,beam:[18,64]}
+ beam:{n:74,an:'beam',su:1,beam:[18,64]},
+ ctr:{n:28,an:'ctr',ctr:1,inv:[0,15],vx:[3,10,4.5],h:[{s:6,e:11,bx:[-10,118],by:[-180,0],d:45,hs:22,bs:18,pu:17,kd:1,la:-8,hv:1}]}
 };
 const PROJ={
  keris:{v:9.5,w:62,h:46,y:-122,d:72,hs:20,bs:12,pu:8,sp:1},
@@ -810,6 +816,8 @@ function control(f){
   let neutral=NEUT.has(f.st);
   if((f.st==='block'||f.st==='cblock')&&f.t<f.stun)neutral=false;
   if(f.st==='land'&&f.t<3)neutral=false;
+  if(f.q.length&&f.q[0].b==='C'){f.q.shift();
+    if(!f.air&&(neutral||f.st==='block'||f.st==='cblock'||(f.st==='atk'&&f.conf))&&f.meter>=CTR_COST){f.meter-=CTR_COST;startMove(f,'ctr');emit('clash',{x:f.x+f.face*40,y:f.y-110});return;}}
   if(f.q.length){const b=f.q[0].b;let id=null;
     if(!f.air&&(neutral||canCancel(f,b))){
       if(b==='X'){if(f.meter>=100)id=f.ch.su;else f.q.shift();}
@@ -993,6 +1001,7 @@ function botThink(B,me,op){
     B.resp=Math.random()<L.block?'block':(inc&&!opAtk&&Math.random()<L.anti*.8?'jump':'none');}
   if(!tid)B.threat=null;
   if(B.threat&&B.react>0){B.react--;if(B.react===0){if(B.resp==='block'){B.blockT=26;B.plan=[];}else if(B.resp==='jump'&&inc&&!inc.n){B.hold=4|tow;B.holdT=4;}}}
+  if(B.blockT>0&&me.meter>=CTR_COST&&(me.x<WALL_L+90||me.x>WALL_R-90)&&(me.st==='block'||me.st==='cblock')&&Math.random()<L.combo*.06){B.blockT=0;botPress(me,'C');return;}
   if(B.blockT>0){B.blockT--;me.h=16|(op.st==='atk'&&MV[op.mv].cr?8:0);return;}
   if(B.holdT>0){B.holdT--;me.h=B.hold;return;}
   me.h=0;
@@ -1263,7 +1272,8 @@ function fxTick(){for(const p of G.fx){p.l--;if(p.vx!=null){p.x+=p.vx;p.y+=p.vy;
 const cv=$('cv'),ctx=cv.getContext('2d');
 let VW=0,VH=0,DPR=1,K=1,OX=0,OY=0,bgCache=null,bgKey='',SAFE={l:0,r:0,t:0};
 const safeProbe=document.createElement('div');safeProbe.style.cssText='position:fixed;left:0;top:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);visibility:hidden;pointer-events:none';document.body.appendChild(safeProbe);
-function sizeCanvas(){const w=innerWidth,h=innerHeight;DPR=Math.min(devicePixelRatio||1,2);
+const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+function sizeCanvas(){const w=innerWidth,h=innerHeight;DPR=Math.min(devicePixelRatio||1,NATIVE?1.5:2);
   if(w===VW&&h===VH&&cv.width===Math.round(w*DPR))return;VW=w;VH=h;cv.width=Math.round(w*DPR);cv.height=Math.round(h*DPR);
   K=Math.min(h/420,w/780);OY=h-540*K;if(OY>0&&h/K>SH+60)OY=Math.min(OY,(h-SH*K)*.75);bgKey='';
   const cs=getComputedStyle(safeProbe);SAFE={t:parseFloat(cs.paddingTop)||0,r:parseFloat(cs.paddingRight)||0,l:parseFloat(cs.paddingLeft)||0};}
@@ -1315,7 +1325,7 @@ function render(){
   for(const f of G.f){const h=Math.max(0,GY-f.y);c.fillStyle=`rgba(0,0,0,${.35-Math.min(.2,h/600)})`;c.beginPath();c.ellipse(f.x,GY+2,(46-h/10)*f.ch.sc*f.ch.bulk,9*f.ch.sc,0,0,7);c.fill();}
   for(const b of G.bo)if(b.t<14)drawBolt(c,b);
   const order=[...G.f].sort((a,b)=>(a.st==='atk')-(b.st==='atk')||(G.me===a.i)-(G.me===b.i));
-  for(const f of order)drawFighter(c,f);
+  for(const f of order){if(hasSpr(f.ch.id))sprite2D(c,f);else drawFighter(c,f);}
   // batu Badang di atas kepala
   for(const f of G.f)if(f.st==='atk'&&f.mv==='boulder'&&f.t>=10&&f.t<27){c.save();c.translate(f.x,f.y-215*f.ch.sc);c.fillStyle=OUT;c.beginPath();c.arc(0,0,54,0,7);c.fill();c.fillStyle='#7a6a58';c.beginPath();c.arc(0,0,50,0,7);c.fill();c.fillStyle='#5f5244';c.beginPath();c.arc(-14,-10,13,0,7);c.fill();c.restore();}
   for(const p of G.pr)drawProj(c,p,tm);
@@ -1348,7 +1358,8 @@ function drawHUD(c,tm){
     c.strokeStyle='rgba(255,255,255,.7)';c.lineWidth=1.5;c.strokeRect(bx,by,bW,bh);
     // meter super
     const my=by+bh+5,mh=6;c.fillStyle='rgba(0,0,0,.5)';c.fillRect(bx,my,bW*.7,mh);const mp=f.meter/100;
-    c.fillStyle=mp>=1?(tm%10<5?'#fff3b0':'#5ce1ff'):'#3b82f6';if(L)c.fillRect(bx,my,bW*.7*mp,mh);else c.fillRect(bx+bW*.3+bW*.7*(1-mp),my,bW*.7*mp,mh);
+    c.fillStyle='rgba(255,255,255,.7)';c.fillRect(L?bx+bW*.7*CTR_COST/100:bx+bW*.3+bW*.7*(1-CTR_COST/100),my-1,2,mh+2);
+    c.fillStyle=mp>=1?(tm%10<5?'#fff3b0':'#5ce1ff'):mp>=CTR_COST/100?'#38bdf8':'#3b82f6';if(L)c.fillRect(bx,my,bW*.7*mp,mh);else c.fillRect(bx+bW*.3+bW*.7*(1-mp),my,bW*.7*mp,mh);
     // nama
     c.font='italic 900 14px Impact,"Arial Black",sans-serif';c.textAlign=L?'left':'right';c.lineWidth=4;c.lineJoin='round';c.strokeStyle=OUT;
     const nm=G.names?G.names[i]:f.ch.name,nx=L?bx:bx+bW,ny=my+mh+14;c.strokeText(nm,nx,ny);c.fillStyle='#fff';c.fillText(nm,nx,ny);
@@ -1423,7 +1434,7 @@ const sfx={
 const vib=p=>{if(S.vib&&navigator.vibrate)try{navigator.vibrate(p);}catch(e){}};
 
 /* ---------- Kawalan (sentuh + papan kekunci) ---------- */
-const IN={h:0,dir:0,blk:0,kb:0,c:{P:0,K:0,S:0,X:0}};
+const IN={h:0,dir:0,blk:0,kb:0,c:{P:0,K:0,S:0,X:0,C:0}};
 function press(b){IN.c[b]++;localTap(b);}
 function localTap(b){if(!G.f||G.guest||G.paused)return;const f=G.f[G.me];if(f&&G.R.ph==='fight')f.q.push({b,fr:G.frame});}
 function syncH(){IN.h=IN.dir|IN.kb|(IN.blk?16:0);}
@@ -1445,7 +1456,7 @@ function syncH(){IN.h=IN.dir|IN.kb|(IN.blk?16:0);}
     el.addEventListener('pointerup',rel);el.addEventListener('pointercancel',rel);el.addEventListener('pointerleave',rel);
     el.addEventListener('contextmenu',e=>e.preventDefault());});
   const KM={ArrowLeft:1,KeyA:1,ArrowRight:2,KeyD:2,ArrowUp:4,KeyW:4,ArrowDown:8,KeyS:8};
-  const BM={KeyJ:'P',KeyZ:'P',KeyK:'K',KeyX:'K',KeyL:'S',KeyC:'S',KeyO:'X',KeyV:'X'};
+  const BM={KeyJ:'P',KeyZ:'P',KeyK:'K',KeyX:'K',KeyL:'S',KeyC:'S',KeyO:'X',KeyV:'X',KeyU:'C',KeyN:'C'};
   addEventListener('keydown',e=>{if(curScreen()!=='sGame'||document.querySelector('.modal.on'))return;
     if(KM[e.code]){IN.kb|=KM[e.code];syncH();e.preventDefault();}
     else if(e.code==='Space'){IN.kb|=4;syncH();e.preventDefault();}
@@ -1455,13 +1466,16 @@ function syncH(){IN.h=IN.dir|IN.kb|(IN.blk?16:0);}
   addEventListener('keyup',e=>{if(KM[e.code]){IN.kb&=~KM[e.code];syncH();}else if(e.code==='Space'){IN.kb&=~4;syncH();}else if(e.code==='KeyI'||e.code==='ShiftLeft'||e.code==='KeyB'){IN.blk=0;syncH();}});
   addEventListener('blur',()=>{IN.kb=0;IN.dir=0;IN.blk=0;syncH();});
 })();
-function refreshPads(){if(!G.f)return;const f=G.f[G.me];$('padX').classList.toggle('full',f.meter>=100);
+function refreshPads(){if(!G.f)return;const f=G.f[G.me];$('padX').classList.toggle('full',f.meter>=100);$('padC').classList.toggle('cd',f.meter<CTR_COST);
   $('padS').classList.toggle('cd',!G.guest&&!canSpecial(f));}
 
 /* ---------- Gelung permainan ---------- */
 let running=false,acc=0,lastT=0;
+let perfT=0,perfN=0,perfGood=0;
+function perfAdapt(dt){if(typeof G3==='undefined'||!G3.ok)return;perfT+=dt;perfN++;if(perfN<60)return;const avg=perfT/perfN;perfT=0;perfN=0;
+  if(avg>19.5&&G3.q>.55){G3.q=Math.max(.55,G3.q-.15);perfGood=0;}else if(avg<17.2){if(++perfGood>=5&&G3.q<1){G3.q=Math.min(1,G3.q+.1);perfGood=0;}}else perfGood=0;}
 function loop(ts){if(!running)return;requestAnimationFrame(loop);
-  if(!lastT)lastT=ts;let dt=Math.min(100,ts-lastT);lastT=ts;
+  if(!lastT)lastT=ts;let dt=Math.min(100,ts-lastT);lastT=ts;if(!G.paused)perfAdapt(dt);
   if(!G.paused){acc+=dt;let n=0;while(acc>=1000/60&&n<5){acc-=1000/60;n++;if(G.f)G.f.forEach(f=>{f.px=f.x;f.py=f.y;});tick();}if(n===5)acc=0;}
   if(G.f){const al=G.guest||G.paused?1:clamp(acc/(1000/60),0,1);G.f.forEach(f=>{const big=f.px==null||Math.abs(f.x-f.px)>60;f.rx=big?f.x:f.px+(f.x-f.px)*al;f.ry=big?f.y:f.py+(f.y-f.py)*al;});}
   render();if(G.frame%6===0)refreshPads();}
@@ -1476,7 +1490,7 @@ function stopLoop(){running=false;}
 /* ============================================================
    ENJIN 3D MINI (WebGL, tanpa library) — pahlawan 3D, pentas 3D, kamera
    ============================================================ */
-const G3={ok:false,gl:null,cv:null,prog:null,geo:{},tex:{},stage:null,stageId:-1,cam:{x:0,y:1.1,d:9,tx:0,ty:1.1,vw:7},vp:null,eye:[0,1,9],snap:{},list:[]};
+const G3={q:1,ok:false,gl:null,cv:null,prog:null,geo:{},tex:{},stage:null,stageId:-1,cam:{x:0,y:1.1,d:9,tx:0,ty:1.1,vw:7},vp:null,eye:[0,1,9],snap:{},list:[]};
 const V3={sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],add:(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sc:(a,s)=>[a[0]*s,a[1]*s,a[2]*s],
   len:a=>Math.hypot(a[0],a[1],a[2]),nrm:a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/l,a[1]/l,a[2]/l];},
   cr:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2]};
@@ -1634,7 +1648,7 @@ function camUpdate3D(w,h,focus){const c=G3.cam,asp=w/h,fov=30*D2R,tn=Math.tan(fo
   G3.eye=[c.x+shx,c.ty+.32+shy,d];const V=M4.look(G3.eye,[c.x+shx,c.ty+shy,0],[0,1,0]);const Pm=M4.persp(fov,asp,.1,80);G3.vp=M4.mul(Pm,V);}
 function snapCam(w,h,cx,cy,vw){const asp=w/h,fov=30*D2R,d=vw/2/(Math.tan(fov/2)*asp);G3.eye=[cx,cy+.15,d];G3.vp=M4.mul(M4.persp(fov,asp,.1,80),M4.look(G3.eye,[cx,cy,0],[0,1,0]));}
 function g3Draw(w,h,env,clear){
-  const gl=G3.gl,U=G3.U,A=G3.A,cv=G3.cv,dpr=Math.min(devicePixelRatio||1,2);
+  const gl=G3.gl,U=G3.U,A=G3.A,cv=G3.cv,dpr=Math.min(devicePixelRatio||1,(typeof NATIVE!=='undefined'&&NATIVE)?1.5:2)*(G3.q||1);
   const W=Math.round(w*dpr),H=Math.round(h*dpr);if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}
   gl.viewport(0,0,W,H);gl.clearColor(clear?clear[0]:0,clear?clear[1]:0,clear?clear[2]:0,clear?1:0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   gl.useProgram(G3.prog);gl.uniformMatrix4fv(U.uVP,false,G3.vp);gl.uniform3fv(U.uEye,G3.eye);
@@ -1648,7 +1662,7 @@ function g3Draw(w,h,env,clear){
     if(outline){gl.uniform1f(U.uOut,o.ol);gl.uniform3fv(U.uCol,OUTC);gl.uniform3fv(U.uEm,[0,0,0]);gl.uniform1f(U.uLit,0);gl.uniform1f(U.uTexOn,0);}
     else{gl.uniform1f(U.uOut,0);gl.uniform3fv(U.uCol,o.col);gl.uniform3fv(U.uEm,o.em||[0,0,0]);gl.uniform1f(U.uLit,o.lit);gl.uniform1f(U.uSpec,o.spec||0);gl.uniform1f(U.uShin,o.shin||12);
       if(o.tex){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex);gl.uniform1f(U.uTexOn,1);gl.uniform2fv(U.uRep,o.rep||[1,1]);}else gl.uniform1f(U.uTexOn,0);}
-    gl.uniform1f(U.uA,outline?o.a:o.a);gl.uniform1f(U.uFogOn,o.fog?1:0);gl.drawElements(gl.TRIANGLES,o.geo.c,gl.UNSIGNED_SHORT,0);};
+    if(o.noCull)gl.disable(gl.CULL_FACE);gl.uniform1f(U.uA,outline?o.a:o.a);gl.uniform1f(U.uFogOn,o.fog?1:0);gl.drawElements(gl.TRIANGLES,o.geo.c,gl.UNSIGNED_SHORT,0);if(o.noCull)gl.enable(gl.CULL_FACE);};
   gl.disable(gl.BLEND);gl.depthMask(true);
   gl.cullFace(gl.BACK);for(const o of opaque)draw(o,false);
   gl.cullFace(gl.FRONT);for(const o of opaque)if(o.ol)draw(o,true);
@@ -1663,7 +1677,7 @@ function render3D(){
   const c=ctx,tm=G.frame;if(G.frame<3)G3.cam.init=0;G3.cv.style.display='';attachGL($('sGame'),cv);camUpdate3D(VW,VH);
   if(G3.stageId!==G.stage||!G3.stage)buildStage3D(G.stage);
   stageItems();
-  const order=[...G.f];for(const f of order)fighter3D(f);
+  const order=[...G.f];for(const f of order)drawFighterAny3D(f);
   // objek pepejal 3D
   for(const p of G.pr){if(p.ty==='rocket'){const x=(p.x-500)/100,y=(GY-p.y)/100,d=p.vx>0?1:-1;const [ax,ay,az]=frame([d,0,0],[0,0,1]);
       item(cylGeo(1),M4.basis(V3.sc(ay,.13),V3.sc(ax,.34),V3.sc(az,.13),[x-d*.2,y,0]),[.6,.66,.75]);item(G3.geo.sph,M4.trs([x+d*.16,y,0],.17,.17,.17),[.35,.39,.47]);
@@ -1940,6 +1954,61 @@ function head3D(ch,H,sc,col,O,fl,tm,f,M,GOLD){
       limb3(a2,b2,r*.1,r*.08,[1,1,1],Object.assign({},GOLD,{rep:[1,1]}));limb3(b2,c3,r*.08,r*.03,[1,1,1],Object.assign({},GOLD,{rep:[1,1]}));}}
 }
 
+/* ============================================================
+   WATAK GAMBAR (SPRITE) — gambar pose realistik dari ChatGPT
+   Letak: img/<pahlawan>/<pose>.png  (idle wajib; lain pilihan)
+   ============================================================ */
+const SPR_POSES=['idle','walk','crouch','jump','punch','kick','block','hit','down','win','special'];
+const SPR={};// SPR[id][pose]={img:canvas,tex,cw,ch,bb:{x,y,w,h}}
+function sprProcess(img){const w=img.naturalWidth,h=img.naturalHeight,c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(img,0,0);
+  let d;try{d=x.getImageData(0,0,w,h);}catch(e){return null;}const p=d.data;
+  // latar hijau / putih polos -> lutsinar (jika gambar tiada alpha)
+  const cr=[0,(w-1)*4,(h-1)*w*4,((h-1)*w+w-1)*4].map(i=>[p[i],p[i+1],p[i+2],p[i+3]]);
+  const opaque=cr.every(q=>q[3]>250);
+  if(opaque){const g=cr.every(q=>q[1]>150&&q[0]<120&&q[2]<120),wt=cr.every(q=>q[0]>235&&q[1]>235&&q[2]>235);
+    if(g||wt)for(let i=0;i<p.length;i+=4){const r=p[i],gg=p[i+1],b=p[i+2];
+      if(g){const k=gg-Math.max(r,b);if(k>60)p[i+3]=0;else if(k>25){p[i+3]=Math.round(255*(60-k)/35);p[i+1]=Math.max(r,b);}}
+      else if(r>238&&gg>238&&b>238)p[i+3]=0;}
+    x.putImageData(d,0,0);}
+  let x0=w,y0=h,x1=0,y1=0;for(let yy=0;yy<h;yy+=2)for(let xx=0;xx<w;xx+=2){if(p[(yy*w+xx)*4+3]>40){if(xx<x0)x0=xx;if(xx>x1)x1=xx;if(yy<y0)y0=yy;if(yy>y1)y1=yy;}}
+  if(x1<=x0||y1<=y0)return null;
+  return{img:c,cw:w,ch:h,bb:{x:x0,y:y0,w:x1-x0+2,h:y1-y0+2},tex:null};}
+function loadSprites(){CHARS.forEach(ch=>SPR_POSES.forEach(ps=>{const im=new Image();
+  im.onload=()=>{const r=sprProcess(im);if(!r)return;(SPR[ch.id]=SPR[ch.id]||{})[ps]=r;};
+  im.src=`img/${ch.id}/${ps}.png?v=${APP_VERSION}`;}));}
+function hasSpr(id){return S.spr!==false&&SPR[id]&&SPR[id].idle;}
+function sprPoseName(f){const s=f.st,m=f.mv;
+  if(s==='atk'){const mm=MV[m];if(mm&&(mm.sp||mm.su))return'special';if(m==='k'||m==='ck'||m==='jk')return'kick';return'punch';}
+  if(s==='walk')return'walk';if(s==='crouch'||s==='land'||s==='rise')return'crouch';if(s==='cblock'||s==='block')return'block';
+  if(s==='jump')return'jump';if(s==='hit')return'hit';if(s==='fall'||s==='lie'||s==='ko')return'down';if(s==='win')return'win';return'idle';}
+const SPR_FALL={walk:'idle',crouch:'idle',jump:'idle',punch:'idle',kick:'punch',block:'idle',hit:'idle',down:'hit',win:'idle',special:'punch'};
+function sprFor(id,ps){const set=SPR[id];let n=ps,g=0;while(!set[n]&&g++<4)n=SPR_FALL[n]||'idle';return set[n]||set.idle;}
+/* ukuran: tinggi 'idle' = tinggi pahlawan; semua pose guna skala & bingkai yang sama */
+function sprGeom(f,sp){const id=f.ch.id,base=SPR[id].idle,H=1.9*f.ch.sc,k=H/base.bb.h;
+  const ax=base.bb.x+base.bb.w/2;// paksi tengah badan (dari pose idle)
+  const grounded=!(f.air||f.y<GY-2);
+  // tapak kaki: bawah kotak pose ini di lantai
+  const bottom=sp.bb.y+sp.bb.h;
+  return{k,ax,bottom,grounded,w:sp.cw*k,h:sp.ch*k};}
+function sprite3D(f,opt){opt=opt||{};const id=f.ch.id,ps=sprPoseName(f),sp=sprFor(id,ps);if(!sp.tex)sp.tex=texFrom(sp.img,false);
+  const g=sprGeom(f,sp),rx=opt.X!=null?opt.X*100+500:(f.rx!=null?f.rx:f.x),ry=f.ry!=null?f.ry:f.y;
+  const fc=f.face>0?1:-1,tm=opt.tm!=null?opt.tm:(G.frame||0);
+  const bob=ps==='idle'?1+Math.sin(tm*.1)*.012:1;
+  // pusat quad: paksi badan di x pahlawan, tapak di lantai
+  const cx=(rx-500)/100+fc*(g.w/2-g.ax*g.k),by=(GY-ry)/100-(sp.ch-g.bottom)*g.k*bob;
+  const cy=by+g.h*bob/2;
+  const fl=f.flash>0&&f.flash%2===1,a=(f.alpha!=null?f.alpha:1)*(f.st==='rise'&&f.t%4<2?.55:1);
+  if(f.meter>=100&&!opt.noAura){const pul=1+.08*Math.sin(tm*.2);item(G3.geo.quad,M4.trs([(rx-500)/100,(GY-ry)/100+.95*f.ch.sc,-.3],2.3*f.ch.sc*pul,2.6*f.ch.sc*pul,1),hex3(f.ch.aura),{lit:0,ol:0,tex:G3.tex.glow,a:.55,add:1,fog:0});}
+  if(!opt.noShadow){const h=Math.max(0,(GY-ry)/100),s=(1.1-Math.min(.6,h*.2))*f.ch.sc*f.ch.bulk;item(G3.geo.floor,M4.trs([(rx-500)/100,.006,.05],s*1.25,1,s*.55),[1,1,1],{lit:0,ol:0,tex:G3.tex.blob,a:1-Math.min(.6,h*.25),fog:0,shadow:1});}
+  item(G3.geo.quad,M4.trs([cx,cy,0],g.w*fc,g.h*bob,1),[1,1,1],{lit:0,ol:0,tex:sp.tex,a:Math.min(.999,a),fog:0,em:fl?[.6,.6,.6]:null,noCull:1});}
+function drawFighterAny3D(f,opt){if(hasSpr(f.ch.id))return sprite3D(f,opt);return fighter3D(f,opt);}
+function sprite2D(c,f,opt){opt=opt||{};const id=f.ch.id,sp=sprFor(id,sprPoseName(f)),g=sprGeom(f,sp),K2=100;
+  const rx=f.rx!=null?f.rx:f.x,ry=f.ry!=null?f.ry:f.y,fc=f.face>0?1:-1,w=g.w*K2,h=g.h*K2;
+  c.save();c.globalAlpha=f.alpha!=null?f.alpha:1;c.translate(rx,ry+(sp.ch-g.bottom)*g.k*K2);c.scale(fc,1);
+  c.drawImage(sp.img,-g.ax*g.k*K2,-h,w,h);
+  if(f.flash>0&&f.flash%2===1){c.globalCompositeOperation='lighter';c.globalAlpha=.5;c.drawImage(sp.img,-g.ax*g.k*K2,-h,w,h);}
+  c.restore();}
+
 /* ============ i18n ============ */
 const T={
 ms:{vsBot:'Lawan Bot',vsBotSub:'4 level: Mudah → Juara',online:'Lawan Online 1v1',onlineSub:'Lawan pemain sebenar & naik pangkat',onlineP:'Bertarung dengan pemain lain secara langsung. Menang untuk naik rating & pangkat!',
@@ -1961,13 +2030,13 @@ ms:{vsBot:'Lawan Bot',vsBotSub:'4 level: Mudah → Juara',online:'Lawan Online 1
  youWin:'ANDA MENANG!',youLose:'ANDA KALAH',draw:'SERI',win:'Anda Menang!',lose:'Anda Kalah',drawT:'Seri',byLeft:'Lawan tinggalkan perlawanan',youLeft:'Anda tinggalkan perlawanan',
  lastCombo:'Kombo',dummy:'Patung',dm0:'Berdiri',dm1:'Menahan',dm2:'Melompat',dummyBtn:'Patung: ',
  rating:'Rating',wins:'Menang',losses:'Kalah',draws:'Seri',games:'Main',rounds:'Pusingan',xpGain:'+{x} XP',lvUp:'🎉 Naik ke Level {n}!',champOpen:'👑 Level JUARA dibuka!',
- lang:'Bahasa',sound:'Bunyi',vib:'Getaran',bigBtn:'Butang kawalan besar',g3d:'Grafik 3D (matikan jika phone lambat)',mystats:'Statistik online saya',botRec:'Rekod lawan bot',howTitle:'Cara main',
- how:['🕹️|Joystick kiri: gerak, ⬆ lompat, ⬇ tunduk','👊|Tumbuk — pantas','🦵|Tendang — jauh & kuat (tunduk + tendang = sepak jatuh)','🛡️|Tahan — atau tolak joystick ke belakang','✨|Jurus Khas pahlawan','⚡|SUPER bila meter biru penuh','🔥|Kombo: 👊 → 👊 → 🦵 → ✨'],
+ lang:'Bahasa',sound:'Bunyi',vib:'Getaran',bigBtn:'Butang kawalan besar',g3d:'Grafik 3D (matikan jika phone lambat)',sprT:'Watak gambar realistik (img/)',mystats:'Statistik online saya',botRec:'Rekod lawan bot',howTitle:'Cara main',
+ how:['🕹️|Joystick kiri: gerak, ⬆ lompat, ⬇ tunduk','🔄|BALAS — bila tersepit / ditekan ke belakang, tolak lawan jauh (guna 30% meter biru)','👊|Tumbuk — pantas','🦵|Tendang — jauh & kuat (tunduk + tendang = sepak jatuh)','🛡️|Tahan — atau tolak joystick ke belakang','✨|Jurus Khas pahlawan','⚡|SUPER bila meter biru penuh','🔥|Kombo: 👊 → 👊 → 🦵 → ✨'],
  emptyRank:'Belum ada pemain dalam ranking.\nJadilah yang pertama! 🏆',
  iosTitle:'Pasang di iPhone / iPad',copyLink:'Salin Link',shareLink:'Kongsi',qrSub:'Imbas dengan kamera iPhone',ios1:'Buka link dalam Safari (bukan Chrome)',ios2:'Tekan butang Share ⬆️ di bawah skrin',ios3:'Pilih "Add to Home Screen" → Add',ios4:'Buka ProFighter dari ikon di skrin utama',ios5:'Pusingkan telefon ke melintang (landscape) & matikan kunci putaran (Rotation Lock) jika perlu',iosTip:'Main skrin penuh di iPhone: pasang ke Home Screen',howInstall:'Cara',gotIt:'Faham!',iosWhy:'ProFighter boleh dimain terus dalam Safari, tetapi lebih baik dipasang ke Home Screen — skrin penuh, tiada bar Safari & ranking/online berfungsi sama macam Android.',copied:'Link disalin ✓ Tampal dalam Safari',shareTxt:'Jom lawan aku dalam ProFighter! Buka dalam Safari:',
  resetTitle:'Padam Ranking',resetSub:'Semua ranking & rating pemain ProFighter akan direset. Masukkan password admin.',resetBtn:'Padam',resetOk:'Ranking berjaya dipadam ✓',resetBad:'Password salah',pwHint:'Huruf kecil & nombor sahaja',rulesOld:'Ranking tak dapat disimpan — Publish fail firestore.rules di Firebase',syncErr:'Profil anda belum masuk ranking. Semak internet / Firestore Rules',newSeason:'Ranking musim baru bermula!',
  version:'Versi',checkUpd:'Semak Kemas Kini',updNow:'Kemas Kini',later:'Nanti',updTitle:'Versi baru tersedia!',updSub:'Versi {v} sudah ada. Tekan Kemas Kini — app akan dimuat semula dalam beberapa saat. Semua data & ranking kekal selamat.',updBar:'Versi baru {v} tersedia',updLatest:'Anda guna versi terkini ✓',updFail:'Tak dapat semak kemas kini',updDl:'Mengemas kini…',updDone:'Versi baru dipasang',
- rotTitle:'Pusingkan telefon anda',rotSub:'ProFighter dimain dalam mod melintang (landscape)',bP:'TUMBUK',bK:'TENDANG',bS:'KHAS',bB:'TAHAN',tier:'Pangkat'},
+ rotTitle:'Pusingkan telefon anda',rotSub:'ProFighter dimain dalam mod melintang (landscape)',bP:'TUMBUK',bC:'BALAS',bK:'TENDANG',bS:'KHAS',bB:'TAHAN',tier:'Pangkat'},
 en:{vsBot:'Play vs Bot',vsBotSub:'4 levels: Easy → Champion',online:'Online 1v1 Battle',onlineSub:'Fight real players & rank up',onlineP:'Fight other players live. Win to raise your rating & rank!',
  train:'Training',trainSub:'Practise moves & combos freely',rank:'Ranking',set:'Settings',back:'Back',cancel:'Cancel',next:'Next ➜',
  exitBtn:'Exit App',exitApp:'Exit ProFighter?',exitSub:'See you again, fighter! Keep training.',
@@ -1987,13 +2056,13 @@ en:{vsBot:'Play vs Bot',vsBotSub:'4 levels: Easy → Champion',online:'Online 1v
  youWin:'YOU WIN!',youLose:'YOU LOSE',draw:'DRAW',win:'You Win!',lose:'You Lose',drawT:'Draw',byLeft:'Opponent left the match',youLeft:'You left the match',
  lastCombo:'Combo',dummy:'Dummy',dm0:'Standing',dm1:'Blocking',dm2:'Jumping',dummyBtn:'Dummy: ',
  rating:'Rating',wins:'Wins',losses:'Losses',draws:'Draws',games:'Games',rounds:'Rounds',xpGain:'+{x} XP',lvUp:'🎉 Level up! Level {n}',champOpen:'👑 CHAMPION level unlocked!',
- lang:'Language',sound:'Sound',vib:'Vibration',bigBtn:'Large control buttons',g3d:'3D graphics (turn off if phone is slow)',mystats:'My online stats',botRec:'Bot record',howTitle:'How to play',
- how:['🕹️|Left joystick: move, ⬆ jump, ⬇ crouch','👊|Punch — fast','🦵|Kick — long & strong (crouch + kick = sweep)','🛡️|Block — or hold the joystick backwards','✨|Fighter\'s Special move','⚡|SUPER when the blue meter is full','🔥|Combo: 👊 → 👊 → 🦵 → ✨'],
+ lang:'Language',sound:'Sound',vib:'Vibration',bigBtn:'Large control buttons',g3d:'3D graphics (turn off if phone is slow)',sprT:'Realistic image fighters (img/)',mystats:'My online stats',botRec:'Bot record',howTitle:'How to play',
+ how:['🕹️|Left joystick: move, ⬆ jump, ⬇ crouch','🔄|COUNTER — when cornered, blast the opponent away (uses 30% of the blue meter)','👊|Punch — fast','🦵|Kick — long & strong (crouch + kick = sweep)','🛡️|Block — or hold the joystick backwards','✨|Fighter\'s Special move','⚡|SUPER when the blue meter is full','🔥|Combo: 👊 → 👊 → 🦵 → ✨'],
  emptyRank:'No players ranked yet.\nBe the first! 🏆',
  iosTitle:'Install on iPhone / iPad',copyLink:'Copy Link',shareLink:'Share',qrSub:'Scan with iPhone camera',ios1:'Open the link in Safari (not Chrome)',ios2:'Tap the Share button ⬆️ at the bottom',ios3:'Choose "Add to Home Screen" → Add',ios4:'Open ProFighter from the home screen icon',ios5:'Turn the phone sideways (landscape) & switch off Rotation Lock if needed',iosTip:'Play full screen on iPhone: add to Home Screen',howInstall:'How',gotIt:'Got it!',iosWhy:'ProFighter runs right in Safari, but it is best added to the Home Screen — full screen, no Safari bars, and online/ranking work the same as on Android.',copied:'Link copied ✓ Paste it in Safari',shareTxt:'Fight me in ProFighter! Open in Safari:',
  resetTitle:'Delete Ranking',resetSub:'All ProFighter rankings & ratings will be reset. Enter the admin password.',resetBtn:'Delete',resetOk:'Ranking deleted ✓',resetBad:'Wrong password',pwHint:'Lowercase letters & numbers only',rulesOld:'Ranking cannot be saved — publish firestore.rules in Firebase',syncErr:'Your profile is not in the ranking yet. Check internet / Firestore Rules',newSeason:'New ranking season started!',
  version:'Version',checkUpd:'Check for Update',updNow:'Update',later:'Later',updTitle:'New version available!',updSub:'Version {v} is available. Tap Update — the app reloads in a few seconds. All your data & ranking stay safe.',updBar:'New version {v} available',updLatest:'You are on the latest version ✓',updFail:'Could not check for updates',updDl:'Updating…',updDone:'New version installed',
- rotTitle:'Rotate your phone',rotSub:'ProFighter is played in landscape mode',bP:'PUNCH',bK:'KICK',bS:'SPECIAL',bB:'BLOCK',tier:'Rank'}
+ rotTitle:'Rotate your phone',rotSub:'ProFighter is played in landscape mode',bP:'PUNCH',bC:'COUNTER',bK:'KICK',bS:'SPECIAL',bB:'BLOCK',tier:'Rank'}
 };
 const TIERS=[[0,'🥉','Gangsa','Bronze'],[1100,'🥈','Perak','Silver'],[1250,'🥇','Emas','Gold'],[1400,'💠','Platinum','Platinum'],[1600,'💎','Berlian','Diamond'],[1800,'👑','Legenda','Legend']];
 function tierOf(r){let x=TIERS[0];for(const tr of TIERS)if(r>=tr[0])x=tr;return x;}
@@ -2003,7 +2072,7 @@ const lvlOf=xp=>Math.floor(Math.sqrt((xp||0)/40))+1;
 /* ============ Storage, settings & profile ============ */
 const LS={get(k,d){try{const v=localStorage.getItem('profighter_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
   set(k,v){try{localStorage.setItem('profighter_'+k,JSON.stringify(v));}catch(e){}}};
-let S=Object.assign({lang:'ms',sound:true,vib:true,big:false,g3d:true},LS.get('settings',{}));
+let S=Object.assign({lang:'ms',sound:true,vib:true,big:false,g3d:true,spr:true},LS.get('settings',{}));
 let ME=LS.get('me',null);
 if(!ME){ME={name:'',rating:1000,wins:0,losses:0,draws:0,games:0,season:1,xp:0};LS.set('me',ME);}
 if(ME.xp==null)ME.xp=0;
@@ -2016,9 +2085,9 @@ function applyLang(){document.documentElement.lang=S.lang;
   $('howto').innerHTML=t('how').map(x=>{const[a,b]=x.split('|');return`<b>${a}</b><span>${esc(b)}</span>`;}).join('');}
 function setLang(l){S.lang=l;LS.set('settings',S);applyLang();refreshHome();refreshSet();buildKBs();renderLevels();if(olUnsub)renderOnline();
   if(updInfo)$('updTxt').textContent=t('updBar').replace('{v}',updInfo.v);if(curScreen()==='sSelect')renderSelect();}
-function toggleSet(k){S[k]=k==='g3d'?S.g3d===false:!S[k];LS.set('settings',S);if(k==='g3d'&&S.g3d&&!G3.ok)g3Init();refreshSet();applyBig();}
+function toggleSet(k){S[k]=(k==='g3d'||k==='spr')?S[k]===false:!S[k];LS.set('settings',S);if(k==='g3d'&&S.g3d&&!G3.ok)g3Init();refreshSet();applyBig();}
 function applyBig(){document.body.classList.toggle('bigPads',!!S.big);}
-function refreshSet(){$('tSound').classList.toggle('on',S.sound);$('tVib').classList.toggle('on',S.vib);$('tBig').classList.toggle('on',!!S.big);$('tG3d').classList.toggle('on',S.g3d!==false);$('sName').textContent=ME.name||'—';
+function refreshSet(){$('tSound').classList.toggle('on',S.sound);$('tVib').classList.toggle('on',S.vib);$('tBig').classList.toggle('on',!!S.big);$('tG3d').classList.toggle('on',S.g3d!==false);$('tSpr').classList.toggle('on',S.spr!==false);$('sprRow').style.display=Object.keys(SPR).length?'':'none';$('sName').textContent=ME.name||'—';
   $('myStats').innerHTML=`<div><b>${ME.rating}</b><span>${tierTxt(ME.rating)}</span></div><div><b>${ME.games}</b><span>${t('games')}</span></div><div><b>${ME.wins}-${ME.losses}-${ME.draws||0}</b><span>${t('recW')}-${t('recL')}-${t('recD')}</span></div>`;
   const st=LS.get('stats',{});
   $('botStats').innerHTML=BOTL.map((L,i)=>{const s=st[i]||{w:0,l:0,d:0};return `<div><b style="font-size:12px">${L.stars} ${t(LVKEY[i])}</b><span>${s.w}${t('recW')} · ${s.l}${t('recL')}</span></div>`;}).join('');}
@@ -2096,7 +2165,7 @@ function homeLoop(){if(curScreen()!=='sHome'){homeOn=false;return;}requestAnimat
   const A=demoAt(me,fr,0,1,500-(port?70:68)),B=demoAt(rv,fr,260,-1,500+(port?70:68));
   if(use3D()){$('homeCv').style.display='none';attachGL(box,null);G3.cv.style.display='';
     if(G3.stageId!==me.stage||!G3.stage)buildStage3D(me.stage);stageItems();
-    fighter3D(A.f,{pose:A.pose,tm:fr});fighter3D(B.f,{pose:B.pose,tm:fr});
+    drawFighterAny3D(A.f,{pose:A.pose,tm:fr});drawFighterAny3D(B.f,{pose:B.pose,tm:fr});
     const asp=w/h,vw=port?3.6:Math.max(6.6,7.4*Math.min(1,2.1/asp)),vh=vw/asp;camUpdate3D(w,h,{x:port?0:.1*vw,vw,y:port?.06*vh:.4*vh});
     const env=ST3[me.stage];g3Draw(w,h,env,env.fog);return;}
   // 2D
@@ -2140,7 +2209,7 @@ function selDemo(ch){const cyc=[['idle',80],[ch.sp,MV[ch.sp].n],['idle',50],['p'
 function selLoop(){if(curScreen()!=='sSelect'){selAnimOn=false;return;}requestAnimationFrame(selLoop);selF++;
   const cvs=$('selCv'),w=cvs.clientWidth,h=cvs.clientHeight,dpr=Math.min(devicePixelRatio||1,2);if(!w||!h)return;
   if(use3D()){const ch=CHARS[selPick];cvs.style.visibility='hidden';attachGL(document.querySelector('.selPrev'),document.querySelector('.selInfo'));G3.cv.style.display='';
-    if(G3.stageId!==ch.stage||!G3.stage)buildStage3D(ch.stage);stageItems();const {f,pose}=selDemo(ch);fighter3D(f,{pose,tm:selF});
+    if(G3.stageId!==ch.stage||!G3.stage)buildStage3D(ch.stage);stageItems();const {f,pose}=selDemo(ch);drawFighterAny3D(f,{pose,tm:selF});
     camUpdate3D(w,h,{x:PORT[ch.id]?1.15*ch.sc:.35,vw:3.4*ch.sc,y:1.02*ch.sc});const env=ST3[ch.stage];g3Draw(w,h,env,env.fog);return;}
   cvs.style.visibility='';
   if(cvs.width!==Math.round(w*dpr)){cvs.width=Math.round(w*dpr);cvs.height=Math.round(h*dpr);selBgKey='';}
@@ -2173,7 +2242,7 @@ function startFight(o){LASTFIGHT=o;
   prepSnaps([o.c0,o.c1]);newFight(Object.assign({onEnd:fightEnd},o));
   G.names=o.names||null;
   show('sGame');$('pauseBtn').textContent=o.mode==='online'?'🏳️':'⏸';
-  IN.c={P:0,K:0,S:0,X:0};startLoop();beat();
+  IN.c={P:0,K:0,S:0,X:0,C:0};startLoop();beat();
   if(o.mode!=='train'){if(o.mode!=='online')G.paused=true;const g0=G;showVS(o,()=>{if(G===g0&&!$('mPause').classList.contains('on')){G.paused=false;lastT=0;}});}
   try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}}
 function fightEnd(res){
@@ -2324,7 +2393,7 @@ function hostMaybeStart(){OM.fightSent=Date.now();const t0=Date.now();
     matchRef.update({fight:{g:OM.d.game,net:mode,ts:Date.now()}}).catch(e=>console.warn(e));};go();}
 function startOnlineFight(d){OM.started=true;const role=OM.role;
   const pk=d.pk,c0=pk[d.p1.uid],c1=pk[d.p2.uid];
-  NET.mode=d.fight.net==='p2p'?'p2p':'relay';NET.lastRecv=Date.now();NET.gc={P:0,K:0,S:0,X:0};NET.lastSend=0;
+  NET.mode=d.fight.net==='p2p'?'p2p':'relay';NET.lastRecv=Date.now();NET.gc={P:0,K:0,S:0,X:0,C:0};NET.lastSend=0;
   startFight({mode:'online',c0,c1,me:role==='p1'?0:1,guest:role==='p2',stage:d.stage||0,names:[d.p1.name,d.p2.name],netMode:NET.mode});
   G.netMode=NET.mode;if(NET.mode==='relay')relayStart();}
 function onlineEnd(res,reason){
@@ -2372,7 +2441,7 @@ function onNetMsg(m){NET.lastRecv=Date.now();
   switch(m.k){
     case 's':if(G.guest&&G.f&&m.g===OM.game){if(!G.snaps.length||m.fr>G.snaps[G.snaps.length-1].fr){m.rt=performance.now();G.snaps.push(m);if(G.snaps.length>40)G.snaps.shift();}}break;
     case 'i':if(!G.guest&&G.f&&G.mode==='online'&&m.g===OM.game){const f=G.f[1-G.me];f.h=m.h;const gc=NET.gc||{P:0,K:0,S:0,X:0};
-      ['P','K','S','X'].forEach((b,j)=>{let n=(m.c[j]||0)-(gc[b]||0);if(n>0&&G.R.ph==='fight')for(let k=0;k<Math.min(n,2);k++)f.q.push({b,fr:G.frame});gc[b]=m.c[j];});NET.gc=gc;}break;
+      ['P','K','S','X','C'].forEach((b,j)=>{let n=(m.c[j]||0)-(gc[b]||0);if(n>0&&G.R.ph==='fight')for(let k=0;k<Math.min(n,2);k++)f.q.push({b,fr:G.frame});gc[b]=m.c[j];});NET.gc=gc;}break;
     case 'bye':if(G.f&&G.mode==='online'&&G.R.ph!=='over'){G.R.ph='over';G.R.res=G.me;onlineEnd(G.me,'left');}break;
     case 'ping':netSend({k:'pong',t:m.t});break;
     case 'pong':if(G.f)G.ping=Math.round(Date.now()-m.t);break;}}
@@ -2389,8 +2458,8 @@ function mkSnap(){const R=G.R;return{k:'s',g:OM.game,fr:G.frame,R:[R.n,R.ph,R.t,
 function guestTick(){
   // hantar input
   const now=performance.now();
-  if(NET.mode==='p2p'){if(now-(NET.lastSend||0)>45||IN.h!==NET.lastH||IN.c.P+IN.c.K+IN.c.S+IN.c.X!==NET.lastCS){NET.lastSend=now;NET.lastH=IN.h;NET.lastCS=IN.c.P+IN.c.K+IN.c.S+IN.c.X;netSend({k:'i',g:OM.game,h:IN.h,c:[IN.c.P,IN.c.K,IN.c.S,IN.c.X]});}}
-  else if(IN.h!==NET.lastH||IN.c.P+IN.c.K+IN.c.S+IN.c.X!==NET.lastCS||now-(NET.lastSend||0)>1500){NET.lastSend=now;NET.lastH=IN.h;NET.lastCS=IN.c.P+IN.c.K+IN.c.S+IN.c.X;netSend({k:'i',g:OM.game,h:IN.h,c:[IN.c.P,IN.c.K,IN.c.S,IN.c.X]});}
+  if(NET.mode==='p2p'){if(now-(NET.lastSend||0)>45||IN.h!==NET.lastH||IN.c.P+IN.c.K+IN.c.S+IN.c.X+IN.c.C!==NET.lastCS){NET.lastSend=now;NET.lastH=IN.h;NET.lastCS=IN.c.P+IN.c.K+IN.c.S+IN.c.X+IN.c.C;netSend({k:'i',g:OM.game,h:IN.h,c:[IN.c.P,IN.c.K,IN.c.S,IN.c.X,IN.c.C]});}}
+  else if(IN.h!==NET.lastH||IN.c.P+IN.c.K+IN.c.S+IN.c.X+IN.c.C!==NET.lastCS||now-(NET.lastSend||0)>1500){NET.lastSend=now;NET.lastH=IN.h;NET.lastCS=IN.c.P+IN.c.K+IN.c.S+IN.c.X+IN.c.C;netSend({k:'i',g:OM.game,h:IN.h,c:[IN.c.P,IN.c.K,IN.c.S,IN.c.X,IN.c.C]});}
   netWatch();
   const sn=G.snaps;if(!sn.length)return;
   const delay=NET.mode==='p2p'?75:420,rt=now-delay;
@@ -2586,7 +2655,7 @@ document.addEventListener('contextmenu',e=>{if(!e.target.closest('.linkBox'))e.p
 
 /* ============ Boot ============ */
 try{g3Init();}catch(e){}
-loadPortraits();
+loadPortraits();loadSprites();
 applyLang();applyBig();buildKBs();renderLevels();refreshHome();refreshSet();initFB();checkRot();
 if(!ME.name)setTimeout(askName,600);
 startHome();
